@@ -36,7 +36,7 @@ preferences {
 }
 
 metadata {
-	definition (name: "XSB ZXT-120 Thermostat", namespace: "Smartthings", author: "Smartthings") {
+	definition (name: "XSB ZXT-120 Thermostat", namespace: "smartthings", author: "smartthings") {
 		// Device capabilities of the ZXT-120
         capability "Actuator"
 		capability "Temperature Measurement"
