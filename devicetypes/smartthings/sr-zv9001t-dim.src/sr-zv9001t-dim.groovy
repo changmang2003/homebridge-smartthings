@@ -18,7 +18,7 @@
  */
  
 metadata {
-	definition (name: "SR-ZV9001T-DIM", namespace: "smartthings", author: "changmang yu") {
+	definition (name: "SR-ZV9001T-DIM", namespace: "smartthings", author: "Yu Chang Mang") {
 		capability "Actuator"
 		capability "Button"
         capability "Battery"
@@ -157,120 +157,7 @@ def zwaveEvent(physicalgraph.zwave.commands.securityv1.SecurityMessageEncapsulat
 def zwaveEvent(physicalgraph.zwave.commands.centralscenev1.CentralSceneNotification cmd) {
 		log.debug( "keyAttributes: $cmd.keyAttributes")
         log.debug( "sceneNumber: $cmd.sceneNumber")
-        /*
-        //sendEvent(name:"Events", value: "#$cmd.sceneNumber Test" as String, descriptionText: "button $cmd.sceneNumber was Read $cmd.keyAttributes", isStateChange: true)
-      if ( cmd.sceneNumber == 1  && cmd.keyAttributes == 0) {
-        	Integer button = 1
-            sendEvent(name: "Button Events", value: "#$button pushed" as String, descriptionText: "$device.displayName button $button was pushed")
-            sendEvent(name: "button", value: "pushed", data: [buttonNumber: button], descriptionText: "$device.displayName button $button was pushed")
-            log.debug( "Button $button was pushed" )
-            }
-   	else if  ( cmd.sceneNumber == 1  && cmd.keyAttributes == 2 ) {
-        	Integer button = 1
-            sendEvent(name: "button", value: "held", data: [buttonNumber: button], descriptionText: "Button $button is held")
-            sendEvent(name: "Button Events", value: "#$button held", descriptionText: "$device.displayName button $button was held")
-            log.debug( "Button $button Hold start" )
-            }
-   	else if  ( cmd.sceneNumber == 1  && cmd.keyAttributes == 1 ) {
-        	Integer button = 1
-            sendEvent(name: "button", value: "holdRelease", data: [buttonNumber: button], descriptionText: "Button $button is released")
-        	sendEvent(name: "Button Events", value: "#$button hold released", descriptionText: "$device.displayName button $button was Released")
-            log.debug( "Button $button Hold stop" )
-            }
-    else if  ( cmd.sceneNumber == 2  && cmd.keyAttributes == 0 ) {
-        	Integer button = 2
-            sendEvent(name: "button", value: "pushed", data: [buttonNumber: button], descriptionText: "$device.displayName button $button was pushed")
-        	sendEvent(name: "Button Events", value: "#$button pushed", descriptionText: "$device.displayName button $button was pushed")
-            log.debug( "Button $button was pushed" )
-            }
-    else if  ( cmd.sceneNumber == 2  && cmd.keyAttributes == 2 ) {
-        	Integer button = 2
-            sendEvent(name: "button", value: "held", data: [buttonNumber: button], descriptionText: "Button $button is held")
-        	sendEvent(name: "Button Events", value: "#$button held", descriptionText: "$device.displayName button $button was held")
-            log.debug( "Button $button Hold start" )
-            }
-   	else if  ( cmd.sceneNumber == 2  && cmd.keyAttributes == 1 ) {
-        	Integer button = 2
-            sendEvent(name: "button", value: "holdRelease", data: [buttonNumber: button], descriptionText: "Button $button is released")
-        	sendEvent(name: "Button Events", value: "#$button hold released", descriptionText: "$device.displayName button $button was Released")
-            log.debug( "Button $button Hold stop" )
-            }
-	else if  ( cmd.sceneNumber == 3  && cmd.keyAttributes == 0 ) {
-        	Integer button = 3
-            sendEvent(name: "button", value: "pushed", data: [buttonNumber: button], descriptionText: "$device.displayName button $button was pushed")
-        	sendEvent(name: "Button Events", value: "#$button pushed", descriptionText: "$device.displayName button $button was pushed")
-            log.debug( "Button $button was pushed" )
-            }
-    else if  ( cmd.sceneNumber == 3  && cmd.keyAttributes == 2 ) {
-        	Integer button = 3
-            sendEvent(name: "button", value: "held", data: [buttonNumber: button], descriptionText: "Button $button is held")
-        	sendEvent(name: "Button Events", value: "#$button held", descriptionText: "$device.displayName button $button was held")
-            log.debug( "Button $button Hold start" )
-            }
-   	else if  ( cmd.sceneNumber == 3  && cmd.keyAttributes == 1 ) {
-        	Integer button = 3
-            sendEvent(name: "button", value: "holdRelease", data: [buttonNumber: button], descriptionText: "Button $button is released")
-        	sendEvent(name: "Button Events", value: "#$button hold released", descriptionText: "$device.displayName button $button was Released")
-            log.debug( "Button $button Hold stop" )
-            }
-    else if ( cmd.sceneNumber == 4  && cmd.keyAttributes == 0 ) {
-        	Integer button = 4
-            sendEvent(name: "button", value: "pushed", data: [buttonNumber: button], descriptionText: "$device.displayName button $button was pushed")
-        	sendEvent(name: "Button Events", value: "#$button pushed", descriptionText: "$device.displayName button $button was pushed")
-            log.debug( "Button $button was pushed" )
-            }
-    else if  ( cmd.sceneNumber == 4  && cmd.keyAttributes == 2 ) {
-        	Integer button = 4
-            sendEvent(name: "button", value: "held", data: [buttonNumber: button], descriptionText: "Button $button is held")
-        	sendEvent(name: "Button Events", value: "#$button held", descriptionText: "$device.displayName button $button was held")
-            log.debug( "Button $button Hold start" )
-            }
-   	else if  ( cmd.sceneNumber == 4  && cmd.keyAttributes == 1 ) {
-        	Integer button = 4
-            sendEvent(name: "button", value: "holdRelease", data: [buttonNumber: button], descriptionText: "Button $button is released")
-        	sendEvent(name: "Button Events", value: "#$button hold released", descriptionText: "$device.displayName button $button was Released")
-            log.debug( "Button $button Hold stop" )
-            }
-    else if ( cmd.sceneNumber == 5  && cmd.keyAttributes == 0 ) {
-        	Integer button = 5
-            sendEvent(name: "button", value: "pushed", data: [buttonNumber: button], descriptionText: "$device.displayName button $button was pushed")
-        	sendEvent(name: "Button Events", value: "#$button pushed", descriptionText: "$device.displayName button $button was pushed")
-            log.debug( "Button $button was pushed" )
-            }
-    else if  ( cmd.sceneNumber == 5  && cmd.keyAttributes == 2 ) {
-        	Integer button = 5
-            sendEvent(name: "button", value: "held", data: [buttonNumber: button], descriptionText: "Button $button is held")
-        	sendEvent(name: "Button Events", value: "#$button held", descriptionText: "$device.displayName button $button was held")
-            log.debug( "Button $button Hold start" )
-            }
-   	else if  ( cmd.sceneNumber == 5  && cmd.keyAttributes == 1 ) {
-        	Integer button = 5
-            sendEvent(name: "button", value: "holdRelease", data: [buttonNumber: button], descriptionText: "Button $button is released")
-        	sendEvent(name: "Button Events", value: "#$button hold released", descriptionText: "$device.displayName button $button was Released")
-            log.debug( "Button $button Hold stop" )
-            }
-   	else if ( cmd.sceneNumber == 6  && cmd.keyAttributes == 0 ) {
-        	Integer button = 6
-            sendEvent(name: "button", value: "pushed", data: [buttonNumber: button], descriptionText: "$device.displayName button $button was pushed")
-        	sendEvent(name: "Button Events", value: "#$button pushed", descriptionText: "$device.displayName button $button was pushed")
-            log.debug( "Button $button was pushed" )
-            }
-    else if  ( cmd.sceneNumber == 6  && cmd.keyAttributes == 2 ) {
-        	Integer button = 6
-            sendEvent(name: "button", value: "held", data: [buttonNumber: button], descriptionText: "Button $button is held")
-        	sendEvent(name: "Button Events", value: "#$button held", descriptionText: "$device.displayName button $button was held")
-            log.debug( "Button $button Hold start" )
-            }
-   	else if  ( cmd.sceneNumber == 6  && cmd.keyAttributes == 1 ) {
-        	Integer button = 6
-            sendEvent(name: "button", value: "holdRelease", data: [buttonNumber: button], descriptionText: "Button $button is released")
-        	sendEvent(name: "Button Events", value: "#$button hold released", descriptionText: "$device.displayName button $button was Released")
-            log.debug( "Button $button Hold stop" )
-            }
-    else{
-        	log.debug( "Commands and Button ID combinations unaccounted for happened" )
-            }
-            */
+
        state.buttonnumber=cmd.sceneNumber     
 }
 
@@ -323,7 +210,7 @@ def zwaveEvent(physicalgraph.zwave.commands.switchmultilevelv1.SwitchMultilevelS
 def zwaveEvent(physicalgraph.zwave.commands.switchmultilevelv1.SwitchMultilevelStopLevelChange cmd) {
 	log.debug "Multilevel Stop CHange: $cmd"
 }
-
+/*
 def on() {
 	sendEvent(tapUp1Response("digital"))
 	delayBetween([
@@ -339,16 +226,18 @@ def off() {
 			zwave.switchMultilevelV1.switchMultilevelGet().format()
 	],5000)
 }
-
+*/
 def setLevel (value) {
 	log.debug "setLevel >> value: $value"
 	def valueaux = value as Integer
 	def level = Math.max(Math.min(valueaux, 99), 0)
+    /*
 	if (level > 0) {
 		sendEvent(name: "switch", value: "on")
 	} else {
 		sendEvent(name: "switch", value: "off")
 	}
+    */
 	sendEvent(name: "level", value: level, unit: "%")
     def result = []
  
@@ -483,9 +372,10 @@ private updateStatus(){
 }
 
 def ping() {
-    logging("ping()")
-	logging("Battery Device - Not sending ping commands")
+   refresh()
 }
+
+
 /*
 // Correct configure for dim events:
 
