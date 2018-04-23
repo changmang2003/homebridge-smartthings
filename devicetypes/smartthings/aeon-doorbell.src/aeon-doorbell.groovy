@@ -171,9 +171,9 @@ metadata {
 			range: "1..100",
 			displayDuringSetup: true		
 		input "repeat", "number",
-			title: "重複: (1-20)",
+			title: "重複: (0-100)",
 			required: true,
-			range: "1..20",
+			range: "0..20",
 			displayDuringSetup: true
 		input "checkinInterval", "enum",
 			title: "檢查間隔:",
@@ -206,8 +206,8 @@ metadata {
 	tiles(scale: 2) {
 		multiAttributeTile(name:"statusTile", type: "generic", width: 6, height: 4, canChangeIcon: true){
 			tileAttribute ("device.status", key: "PRIMARY_CONTROL") {
-				attributeState "off", label:'off', action: "off", icon:"st.Home.home30", backgroundColor:"#ffffff"
-				attributeState "doorbell", label:'Doorbell Ringing!', action: "off", icon:"st.Home.home30", backgroundColor:"#99c2ff"
+				attributeState "off", label:'off', action: "off", icon:"st.Home.home2" , backgroundColor:"#ffffff"
+				attributeState "doorbell", label:'Doorbell Ringing!', action: "off", icon:"st.Home.home2" , backgroundColor:"#99c2ff"
 				attributeState "alarm", label:'Alarm Sounding!', action: "off", icon:"st.alarm.alarm.alarm", backgroundColor:"#ff9999"
 				attributeState "beep", label:'Beeping!', action: "off", icon:"st.Entertainment.entertainment2", backgroundColor:"#99FF99"
 				attributeState "play", label:'Playing!', action: "off", icon:"st.Entertainment.entertainment2", backgroundColor:"#694489"
@@ -223,12 +223,12 @@ metadata {
 			state "off", 
 				label:'門鈴', 
 				action:"on",
-				icon:"st.Home.home30",
+				icon:"st.Electronics.electronics14",
 				defaultState: true
 			state "on",
 				label:'門鈴聲',
 				action:"off",
-				icon:"st.Home.home30",
+				icon:"st.Electronics.electronics14",
 				nextState: "off", 
 				backgroundColor: "#99c2ff"
 		}
@@ -462,6 +462,7 @@ def off() {
 		deviceNotifyTypeSetCmd(true),
 		basicSetCmd(0x00)
 	], 100)
+  
 }
 
 // Plays doorbellTrack and raises switch.on event
@@ -746,15 +747,15 @@ private getCommandClassVersions() {
 	[
 		0x20: 1,	// Basic
 		0x25: 1,	// Switch Binary
-		0x59: 1,  // AssociationGrpInfo
-		0x5A: 1,  // DeviceResetLocally
-		0x5E: 2,  // ZwaveplusInfo
-		0x70: 1,  // Configuration
-		0x72: 2,  // ManufacturerSpecific
-		0x73: 1,  // Powerlevel
+		0x59: 1,	// AssociationGrpInfo
+		0x5A: 1,	// DeviceResetLocally
+		0x5E: 2,	// ZwaveplusInfo
+		0x70: 1,	// Configuration
+		0x72: 2,	// ManufacturerSpecific
+		0x73: 1,	// Powerlevel
 		0x7A: 2,	// Firmware Update
 		0x82: 1,	// Hail
-		0x85: 2,  // Association
+		0x85: 2,	// Association
 		0x86: 1,	// Version (2)
 		0x98: 1		// Security
 	]
@@ -777,8 +778,8 @@ def zwaveEvent(physicalgraph.zwave.commands.basicv1.BasicReport cmd) {
 			result << createEvent(name: "switch", value: "on", descriptionText: "Doorbell Ringing", displayed: true, isStateChange: true)
 			
 			result << createEvent(name: "button", value: "pushed", data: [buttonNumber: 1], displayed: false, isStateChange: true)
-			
-			result << createEvent(name: "status", value: "doorbell", displayed: false, isStateChange: true)
+			result << createEvent(name: "status", value: "play", displayed: false, isStateChange: true)
+			//result << createEvent(name: "status", value: "doorbell", displayed: false, isStateChange: true)
 		}
 	}
 	else {

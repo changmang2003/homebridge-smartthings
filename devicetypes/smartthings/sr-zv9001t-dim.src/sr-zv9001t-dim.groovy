@@ -18,7 +18,7 @@
  */
  
 metadata {
-	definition (name: "SR-ZV9001T-DIM", namespace: "smartthings", author: "Yu Chang Mang") {
+	definition (name: "SR-ZV9001T-DIM", namespace: "SmartThings", author: "Yu Chang Mang") {
 		capability "Actuator"
 		capability "Button"
         capability "Battery"
@@ -69,8 +69,8 @@ metadata {
 		
         multiAttributeTile(name:"button", type:"generic", width:6, height:4) {
   			tileAttribute("device.button", key: "PRIMARY_CONTROL"){
-    		attributeState "default", label:'Controller', backgroundColor:"#44b621", icon:"st.Home.home30"
-            attributeState "held", label: "holding", backgroundColor: "#C390D4"
+    		attributeState "default", label:'Controller', backgroundColor:"#FFFFFF", icon:"st.unknown.zwave.remote-controller"
+            //attributeState "held", label: "holding", backgroundColor: "#C390D4"
   			}
             tileAttribute ("device.battery", key: "SECONDARY_CONTROL") {
 			attributeState "batteryLevel", label:'${currentValue} % battery'

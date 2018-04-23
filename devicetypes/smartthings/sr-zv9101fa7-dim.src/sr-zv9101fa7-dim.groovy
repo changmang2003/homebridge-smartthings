@@ -15,12 +15,13 @@ metadata {
 	definition(name: "SR-ZV9101FA7-DIM", namespace: "SmartThings", author: "Yu Chang Mang", ocfDeviceType: "oic.d.light", minHubCoreVersion: '000.019.00012', executeCommandsLocally: true) {
 		capability "Switch Level"
 		capability "Actuator"
-		capability "Health Check"
+		capability "Configuration"
 		capability "Switch"
 		capability "Polling"
 		capability "Refresh"
 		capability "Sensor"
-		capability "Light"
+		//capability "Light"
+        //capability "Health Check"
 
 		fingerprint mfr:"0000", prod:"0000", model:"0000",deviceId: "0x1101", deviceJoinName: "SR-ZV9101FA7-DIM"
         fingerprint inClusters: "0x5E, 0x86, 0x72, 0x5A, 0x73, 0x85, 0x59, 0x20, 0x5B, 0x2B, 0x2C, 0x26, 0x27, 0x7A"
@@ -48,10 +49,10 @@ metadata {
 	tiles(scale: 2) {
 		multiAttributeTile(name: "switch", type: "lighting", width: 6, height: 4, canChangeIcon: true) {
 			tileAttribute("device.switch", key: "PRIMARY_CONTROL") {
-				attributeState "on", label: '${name}', action: "switch.off", icon: "st.switches.switch.on", backgroundColor: "#00a0dc", nextState: "turningOff"
-				attributeState "off", label: '${name}', action: "switch.on", icon: "st.switches.switch.off", backgroundColor: "#ffffff", nextState: "turningOn"
-				attributeState "turningOn", label: '${name}', action: "switch.off", icon: "st.switches.switch.on", backgroundColor: "#00a0dc", nextState: "turningOff"
-				attributeState "turningOff", label: '${name}', action: "switch.on", icon: "st.switches.switch.off", backgroundColor: "#ffffff", nextState: "turningOn"
+				attributeState "on", label: '${name}', action: "switch.off", icon: "st.switches.light.on", backgroundColor: "#00a0dc", nextState: "turningOff"
+				attributeState "off", label: '${name}', action: "switch.on", icon: "st.switches.light.off", backgroundColor: "#ffffff", nextState: "turningOn"
+				attributeState "turningOn", label: '${name}', action: "switch.off", icon: "st.switches.light.on", backgroundColor: "#00a0dc", nextState: "turningOff"
+				attributeState "turningOff", label: '${name}', action: "switch.on", icon: "st.switches.light.off", backgroundColor: "#ffffff", nextState: "turningOn"
 			}
 			tileAttribute("device.level", key: "SLIDER_CONTROL") {
 				attributeState "level", action: "switch level.setLevel"
@@ -61,15 +62,21 @@ metadata {
 		standardTile("refresh", "device.switch", width: 2, height: 2, inactiveLabel: false, decoration: "flat") {
 			state "default", label: '', action: "refresh.refresh", icon: "st.secondary.refresh"
 		}
-
+/*
 		valueTile("level", "device.level", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
 			state "level", label: '${currentValue} %', unit: "%", backgroundColor: "#ffffff"
 		}
-
+*/
 		main(["switch"])
-		details(["switch", "level", "refresh"])
+		details(["switch", "refresh"])
 
 	}
+    
+        preferences {
+        input("dimRate", "enum", title: "漸暗的速率", options: ["快", "一般", "慢", "很慢"], defaultValue: "一般", required: false, displayDuringSetup: true)
+        input("dimOnOff", "enum", title: "開/關命令的轉換漸暗？", options: ["Yes", "No"], defaultValue: "No", required: false, displayDuringSetup: true)
+    }
+    
 }
 
 def installed() {
@@ -87,6 +94,85 @@ def installed() {
 def updated() {
 // Device-Watch simply pings if no device events received for 32min(checkInterval)
 	sendEvent(name: "checkInterval", value: 2 * 15 * 60 + 2 * 60, displayed: false, data: [protocol: "zwave", hubHardwareId: device.hub.hardwareID, offlinePingable: "1"])
+ /*   
+    	state.dOnOff = "0000"
+
+	if (dimRate) {
+
+		switch (dimRate)
+        	{
+
+        		case "快":
+
+            		state.rate = "0000"
+                	if (dimOnOff) { state.dOnOff = "0000"}
+                    break
+
+            	case "一般":
+
+            		state.rate = "1500"
+                    if (dimOnOff) { state.dOnOff = "0015"}
+                	break
+
+            	case "慢":
+
+            		state.rate = "2500"
+                    if (dimOnOff) { state.dOnOff = "0025"}
+               		break
+
+            	case "很慢":
+
+            		state.rate = "3500"
+                    if (dimOnOff) { state.dOnOff = "0035"}
+                	break
+
+        	}
+
+    }
+
+    else {
+
+    	state.rate = "1500"
+        state.dOnOff = "0000"
+
+    }
+
+        if (dimOnOff == "Yes"){
+			switch (dimOnOff){
+        		case "InstantOnOff":
+
+            		state.rate = "0000"
+                	if (state.rate == "0000") { state.dOnOff = "0000"}
+                    break
+
+            	case "NormalOnOff":
+
+            		state.rate = "1500"
+                    if (state.rate == "1500") { state.dOnOff = "0015"}
+                	break
+
+            	case "SlowOnOff":
+
+            		state.rate = "2500"
+                    if (state.rate == "2500") { state.dOnOff = "0025"}
+               		break
+
+            	case "Very SlowOnOff":
+
+            		state.rate = "3500"
+                    if (state.rate == "3500") { state.dOnOff = "0035"}
+                	break
+
+        	}
+
+    }
+    else{
+    	state.dOnOff = "0000"
+    }
+*/
+
+
+	//sendHubCommand(new physicalgraph.device.HubAction("st wattr 0x${device.deviceNetworkId} 1 8 0x10 0x21 {${state.dOnOff}}"))
 }
 
 def getCommandClassVersions() {
