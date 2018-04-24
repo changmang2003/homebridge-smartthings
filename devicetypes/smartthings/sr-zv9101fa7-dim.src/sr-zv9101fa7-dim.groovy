@@ -73,7 +73,7 @@ metadata {
 	}
     
         preferences {
-        input("dimRate", "enum", title: "漸暗的速率", options: ["快", "一般", "慢", "很慢"], defaultValue: "一般", required: false, displayDuringSetup: true)
+        input("dimRate", "enum", title: "漸暗的速率", options: [[0:"快"], [1:"一般"], [5:"慢"], [10:"很慢"]], defaultValue: 1,  required: false, displayDuringSetup: true)
         input("dimOnOff", "enum", title: "開/關命令的轉換漸暗？", options: ["Yes", "No"], defaultValue: "No", required: false, displayDuringSetup: true)
     }
     
@@ -94,85 +94,17 @@ def installed() {
 def updated() {
 // Device-Watch simply pings if no device events received for 32min(checkInterval)
 	sendEvent(name: "checkInterval", value: 2 * 15 * 60 + 2 * 60, displayed: false, data: [protocol: "zwave", hubHardwareId: device.hub.hardwareID, offlinePingable: "1"])
- /*   
-    	state.dOnOff = "0000"
+  
+    	state.dOnOff = 0
 
-	if (dimRate) {
-
-		switch (dimRate)
-        	{
-
-        		case "快":
-
-            		state.rate = "0000"
-                	if (dimOnOff) { state.dOnOff = "0000"}
-                    break
-
-            	case "一般":
-
-            		state.rate = "1500"
-                    if (dimOnOff) { state.dOnOff = "0015"}
-                	break
-
-            	case "慢":
-
-            		state.rate = "2500"
-                    if (dimOnOff) { state.dOnOff = "0025"}
-               		break
-
-            	case "很慢":
-
-            		state.rate = "3500"
-                    if (dimOnOff) { state.dOnOff = "0035"}
-                	break
-
-        	}
-
-    }
-
-    else {
-
-    	state.rate = "1500"
-        state.dOnOff = "0000"
-
-    }
-
-        if (dimOnOff == "Yes"){
-			switch (dimOnOff){
-        		case "InstantOnOff":
-
-            		state.rate = "0000"
-                	if (state.rate == "0000") { state.dOnOff = "0000"}
-                    break
-
-            	case "NormalOnOff":
-
-            		state.rate = "1500"
-                    if (state.rate == "1500") { state.dOnOff = "0015"}
-                	break
-
-            	case "SlowOnOff":
-
-            		state.rate = "2500"
-                    if (state.rate == "2500") { state.dOnOff = "0025"}
-               		break
-
-            	case "Very SlowOnOff":
-
-            		state.rate = "3500"
-                    if (state.rate == "3500") { state.dOnOff = "0035"}
-                	break
-
-        	}
-
+    if (dimOnOff == "Yes" & dimRate != null){
+		state.dOnOff = Integer.parseInt(dimRate)
     }
     else{
-    	state.dOnOff = "0000"
+    	state.dOnOff = 0
     }
-*/
 
 
-	//sendHubCommand(new physicalgraph.device.HubAction("st wattr 0x${device.deviceNetworkId} 1 8 0x10 0x21 {${state.dOnOff}}"))
 }
 
 def getCommandClassVersions() {
@@ -184,6 +116,7 @@ def getCommandClassVersions() {
 }
 
 def parse(String description) {
+	
 	def result = null
 	if (description != "updated") {
 		log.debug "parse() >> zwave.parse($description)"
@@ -205,12 +138,13 @@ def zwaveEvent(physicalgraph.zwave.commands.basicv1.BasicReport cmd) {
 	dimmerEvents(cmd)
 }
 
+
 def zwaveEvent(physicalgraph.zwave.commands.basicv1.BasicSet cmd) {
 	dimmerEvents(cmd)
 }
 
-def zwaveEvent(physicalgraph.zwave.commands.switchmultilevelv1.SwitchMultilevelReport cmd) {
-	dimmerEvents(cmd)
+def zwaveEvent(physicalgraph.zwave.commands.switchmultilevelv1.SwitchMultilevelReport cmd) {	
+    dimmerEvents(cmd)
 }
 
 def zwaveEvent(physicalgraph.zwave.commands.switchmultilevelv1.SwitchMultilevelSet cmd) {
@@ -276,6 +210,8 @@ def off() {
 
 def setLevel(value) {
 	log.debug "setLevel >> value: $value"
+    setLevel(value, 1)
+    /*
 	def valueaux = value as Integer
 	def level = Math.max(Math.min(valueaux, 99), 0)
 	if (level > 0) {
@@ -284,7 +220,11 @@ def setLevel(value) {
 		sendEvent(name: "switch", value: "off")
 	}
 	sendEvent(name: "level", value: level, unit: "%")
-	delayBetween([zwave.basicV1.basicSet(value: level).format(), zwave.switchMultilevelV1.switchMultilevelGet().format()], 5000)
+	delayBetween([
+    	zwave.basicV1.basicSet(value: level).format(), 
+        zwave.switchMultilevelV1.switchMultilevelGet().format()
+    ], 5000)
+    */
 }
 
 def setLevel(value, duration) {
@@ -293,8 +233,9 @@ def setLevel(value, duration) {
 	def level = Math.max(Math.min(valueaux, 99), 0)
 	def dimmingDuration = duration < 128 ? duration : 128 + Math.round(duration / 60)
 	def getStatusDelay = duration < 128 ? (duration * 1000) + 2000 : (Math.round(duration / 60) * 60 * 1000) + 2000
-	delayBetween([zwave.switchMultilevelV2.switchMultilevelSet(value: level, dimmingDuration: dimmingDuration).format(),
-				  zwave.switchMultilevelV1.switchMultilevelGet().format()], getStatusDelay)
+	// dimmingDuration: DIM 的速度
+	delayBetween([zwave.switchMultilevelV2.switchMultilevelSet(value: level, dimmingDuration: state.dOnOff).format(),
+				  zwave.switchMultilevelV1.switchMultilevelGet().format()], 5000)
 }
 
 def poll() {
@@ -312,6 +253,7 @@ def refresh() {
 	log.debug "refresh() is called"
 	def commands = []
 	commands << zwave.switchMultilevelV1.switchMultilevelGet().format()
+    
 	if (getDataValue("MSR") == null) {
 		commands << zwave.manufacturerSpecificV1.manufacturerSpecificGet().format()
 	}

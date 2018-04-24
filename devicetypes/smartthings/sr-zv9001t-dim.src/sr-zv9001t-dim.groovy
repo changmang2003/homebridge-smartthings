@@ -155,10 +155,10 @@ def zwaveEvent(physicalgraph.zwave.commands.securityv1.SecurityMessageEncapsulat
 }
 
 def zwaveEvent(physicalgraph.zwave.commands.centralscenev1.CentralSceneNotification cmd) {
-		log.debug( "keyAttributes: $cmd.keyAttributes")
-        log.debug( "sceneNumber: $cmd.sceneNumber")
-
-       state.buttonnumber=cmd.sceneNumber     
+	log.debug( "keyAttributes: $cmd.keyAttributes")
+	log.debug( "sceneNumber: $cmd.sceneNumber")
+	sendEvent(name: "sceneNumber", value: cmd.sceneNumber )
+	state.buttonnumber=cmd.sceneNumber     
 }
 
 
