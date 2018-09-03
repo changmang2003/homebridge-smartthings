@@ -21,8 +21,7 @@
 
 definition(
     name: "Button Controller - Dimmer Lighting",
-    namespace: "smartThings",
-    author: "changmang yu",
+    namespace: "SmartThings", author: "Yu Chang Mang",
     description: "Control lights with buttons like the Aeon Wallmote",
     category: "Convenience",
     iconUrl: "https://s3.amazonaws.com/smartapp-icons/MyApps/Cat-MyApps.png",

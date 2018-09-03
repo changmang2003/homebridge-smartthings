@@ -21,8 +21,7 @@
 
 definition(
     name: "Button Controller - SR Dimmer control",
-    namespace: "smartThings",
-    author: "changmang yu",
+    namespace: "SmartThings", author: "Yu Chang Mang",
     description: "Control lights with buttons like the SR control",
     category: "Convenience",
     iconUrl: "https://s3.amazonaws.com/smartapp-icons/MyApps/Cat-MyApps.png",
@@ -101,20 +100,20 @@ def configureLight(params) {
                     input "lights_${params.buttonNumber}_${params.lightId}_power", "bool", title: "開關指示燈", submitOnChange: false
 					break
 				case ~/.*Dimmer.*/:
-                    input "lights_${params.buttonNumber}_${params.lightId}_power", "bool", title: "開關指示燈", submitOnChange: false
+                    input "lights_${params.buttonNumber}_${params.lightId}_power", "bool", title: "開關指示燈", submitOnChange: false, defaultValue: true
                     input "lights_${params.buttonNumber}_${params.lightId}_lightLevel", "enum", title: "燈光亮度?", required: false, options: [
                     [1:"1%"],[5:"5%"],[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"],["external":"外部控制"]]
 					break
 				case ~/.*Color.*/:
-                    input "lights_${params.buttonNumber}_${params.lightId}_power", "bool", title: "開關指示燈", submitOnChange: false
+                    input "lights_${params.buttonNumber}_${params.lightId}_power", "bool", title: "開關指示燈", submitOnChange: false, defaultValue: true
                     input "lights_${params.buttonNumber}_${params.lightId}_color", "enum", title: "顏色選擇?", required: false, multiple:false, options: [
 					["Soft White":"柔光 - Default"],
 					["White":"白光 - 集中"],
 					["Daylight":"日光 - 充滿活力"],
 					["Warm White":"暖白 - 放鬆"],
-					"Red","Green","Blue","Yellow","Orange","Purple","Pink","Random"]
+					"Red","Green","Blue","Yellow","Orange","Purple","Pink","Random",["external":"外部控制"]]
 					input "lights_${params.buttonNumber}_${params.lightId}_lightLevel", "enum", title: "燈光亮度?", required: false, options: [
-                    [1:"1%"],[5:"5%"],[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"]]
+                    [1:"1%"],[5:"5%"],[10:"10%"],[20:"20%"],[30:"30%"],[40:"40%"],[50:"50%"],[60:"60%"],[70:"70%"],[80:"80%"],[90:"90%"],[100:"100%"],["external":"外部控制"]]
 					break
             }
         }
@@ -346,10 +345,10 @@ def setLight(light, buttonNumber, toggle, sequence = null) {
                 	light.on()
         		break
         	case ~/.*Color.*/:
-                def hueColor = 0
+                def hueColor
                 def saturation = 100
                 def colorTemperature
-
+				def rgbValue = []
                 switch(color) {
                     case "White":
                     hueColor = 52
@@ -397,14 +396,25 @@ def setLight(light, buttonNumber, toggle, sequence = null) {
 		    		int max = 100
 		    		hueColor = rand.nextInt(max+1)
                     break;
+                    case "external":
+                    rgbValue = HexTorgb(buttonDevice*.currentValue('color').toString())            
+                    
+                    brrak;
                 }
-                def rgbValue = huesatToRGB(hueColor, saturation)
+                if (hueColor != null) {
+                	rgbValue = huesatToRGB(hueColor, saturation)
+                    } else {                    
+                    def rgbcolor = rgbToHSV(rgbValue[0], rgbValue[1], rgbValue[2])
+                    hueColor = rgbcolor.hue
+                    saturation = rgbcolor.saturation
+                    colorTemperature = rgbcolor.value
+                    }
                 def hexValue = rgbToHex(r: rgbValue[0], g: rgbValue[1], b: rgbValue[2])
                 def colorValue
                 if (colorTemperature != null) {
                     // Changing the amount of data that is sent because of hue device handler change
-                	// colorValue = [alpha: 1.0, red: rgbValue[0], green: rgbValue[1], blue: rgbValue[2], hex: hexValue, hue: hueColor as double, saturation: saturation, level: level as Integer ?: 100, colorTemperature: colorTemperature]
-                    colorValue = [hue: hueColor as Integer, saturation: saturation, level: level as Integer ?: 100, colorTemperature: colorTemperature]
+                	colorValue = [alpha: 1.0, red: rgbValue[0], green: rgbValue[1], blue: rgbValue[2], hex: hexValue, hue: hueColor as double, saturation: saturation, level: level as Integer ?: 100, colorTemperature: colorTemperature]
+                    //colorValue = [hue: hueColor as Integer, saturation: saturation, level: level as Integer ?: 100, colorTemperature: colorTemperature]
                     try{
                        delayBetween(light.setColorTemperature(colorTemperature),
                        light.setLevel(level as Integer ?: 100), 1000)
@@ -413,8 +423,8 @@ def setLight(light, buttonNumber, toggle, sequence = null) {
                     }
                 } else {
                     // Changing the amount of data that is sent because of hue device handler change
-                	// colorValue = [alpha: 1.0, red: rgbValue[0], green: rgbValue[1], blue: rgbValue[2], hex: hexValue, hue: hueColor as double, saturation: saturation, level: level as Integer ?: 100]
-                    colorValue = [hue: hueColor as Integer, saturation: saturation, level: level as Integer ?: 100]
+                	 colorValue = [alpha: 1.0, red: rgbValue[0], green: rgbValue[1], blue: rgbValue[2], hex: hexValue, hue: hueColor as double, saturation: saturation, level: level as Integer ?: 100]
+                    //colorValue = [hue: hueColor as Integer, saturation: saturation, level: level as Integer ?: 100]
                     light.setColor(colorValue)
                 }
                     
@@ -516,4 +526,34 @@ private hex(value, width=2) {
 		s = "0" + s
 	}
 	s
+}
+
+def rgbToHSV(red, green, blue) {
+	float r = red / 255f
+	float g = green / 255f
+	float b = blue / 255f
+	float max = [r, g, b].max()
+	float delta = max - [r, g, b].min()
+	def hue = 13
+	def saturation = 0
+	if (max && delta) {
+		saturation = 100 * delta / max
+		if (r == max) {
+			hue = ((g - b) / delta) * 100 / 6
+		} else if (g == max) {
+			hue = (2 + (b - r) / delta) * 100 / 6
+		} else {
+			hue = (4 + (r - g) / delta) * 100 / 6
+		}
+	}
+	[hue: hue, saturation: saturation, value: max * 100]
+}
+
+def HexTorgb(rgb){
+	def r = Integer.parseInt(rgb.substring(2,4),16)
+    def g = Integer.parseInt(rgb.substring(4,6),16)
+    def b = Integer.parseInt(rgb.substring(6,8),16)
+    
+     [r,g,b]
+    
 }
