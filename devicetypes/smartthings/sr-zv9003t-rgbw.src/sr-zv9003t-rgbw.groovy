@@ -18,9 +18,11 @@
  */
  
 metadata {
-	definition (name: "SR-ZV9001T-DIM", namespace: "SmartThings", author: "Yu Chang Mang") {
+	definition (name: "SR-ZV9003T-RGBW", namespace: "SmartThings", author: "Yu Chang Mang") {
 		capability "Actuator"
 		capability "Button"
+        capability "Color Control"
+		capability "Color Temperature"
         capability "Battery"
 		capability "Configuration" 
        	capability "Refresh"
@@ -38,10 +40,12 @@ metadata {
         attribute "sceneNumber", "number"
         attribute "button", "enum", ["pushed", "held", "double clicked", "click held"]
         attribute "needUpdate", "string"
-		
-        fingerprint deviceId: "0x0106", mfr: "0000", prod: "0003", model: "A10A", deviceJoinName: "SR-ZV9001T-DIM"
-		fingerprint deviceId: "0x0106", inClusters: "0x5E, 0x85, 0x59, 0x8E, 0x60, 0x86, 0x72, 0x70, 0x5A, 0x73, 0x7A", outClusters: "0x25, 0x26, 0x5B, 0x2B, 0x2C"
-		fingerprint deviceId: "0x0106", inClusters: "0x5E, 0x25, 0x20, 0x85, 0x59, 0x8E, 0x5B, 0x2B, 0x2C"																															
+        attribute "switch", "string"
+       
+
+        fingerprint deviceId: "0x0106", mfr: "0000", prod: "0003", model: "A106", deviceJoinName: "SR-ZV9003T-RGBW"
+		fingerprint deviceId: "0x0106", inClusters: "0x5E, 0x85, 0x59, 0x8E, 0x60, 0x86, 0x72, 0x70, 0x5A, 0x73, 0x7A", outClusters: "0x25, 0x26, 0x33, 0x5B, 0x2B, 0x2C"
+		fingerprint deviceId: "0x0106", inClusters: "0x5E, 0x25, 0x20, 0x85, 0x59, 0x8E, 0x5B, 0x2B, 0x2C" 																														
    }
 
 	simulator {
@@ -118,20 +122,34 @@ def parse(String description) {
     else {
        
        	def cmd = zwave.parse(description.replace("98C1", "9881"), [0x98: 1, 0x20: 1, 0x84: 1, 0x80: 1, 0x60: 3, 0x2B: 1, 0x26: 1])
+
         log.debug "Parsed Command: $cmd"
         if (cmd) {
        	results = zwaveEvent(cmd)
         updateStatus()
 		}
-        
+
         if ( !state.numberOfButtons ) {        
-    	state.numberOfButtons = "6"
-        createEvent(name: "numberOfButtons", value: "6", displayed: false)
+    	state.numberOfButtons = "3"
+        createEvent(name: "numberOfButtons", value: "3", displayed: false)
 		updateStatus()
   		}else{
-        sendEvent(name: "numberOfButtons", value: "6")
+        sendEvent(name: "numberOfButtons", value: "3")
         }
+        
+        
     }
+    /*
+    		if ( !device.currentValue("switch") ) {
+         	//log.debug "switch 不存在"
+            createEvent(name: "switch", value: "off", displayed: false)
+         }
+         
+         */
+            if ( !device.currentValue("level") ) {
+         	//log.debug "level 不存在"
+            createEvent(name: "level", value: 10, unit: "%", displayed: false)
+         } 
 }
   
 def describeAttributes(payload) {
@@ -184,7 +202,7 @@ def zwaveEvent(physicalgraph.zwave.commands.switchmultilevelv1.SwitchMultilevelR
 }
 
 private dimmerEvents(physicalgraph.zwave.Command cmd) {
-	
+	//log.debug "dimmerEvents : $cmd"
 	def value = (cmd.value ? "on" : "off")
 	def result = [createEvent(name: "switch", value: value)]
     state.lastLevel = cmd.value
@@ -203,12 +221,40 @@ def zwaveEvent(physicalgraph.zwave.commands.switchmultilevelv1.SwitchMultilevelS
     //delayBetween([zwave.basicV1.basicSet(value: cmd.value).format()],5000)
    // dimmerEvents(cmd)
 }
+
 def zwaveEvent(physicalgraph.zwave.commands.switchmultilevelv1.SwitchMultilevelStartLevelChange cmd) {
 	log.debug "Multilevel Start CHange: $cmd"
-    [createEvent(name:"switch", value:"on"), response(zwave.switchMultilevelV1.switchMultilevelGet().format())]
+    
+    if (device.currentValue("level") <= 89){
+    sendEvent(name: "level", value: device.currentValue("level") + 10,unit: "%")
+    } else {
+    sendEvent(name: "level", value: 1,unit: "%")
+    }
+    log.debug device.currentValue("level")
+    sendEvent(name: "Button", value: "pushed",  data: [buttonNumber: state.buttonnumber ], isStateChange: true)
+    sendEvent(name: "Button Events", value: "#$state.buttonnumber pushed" )
+    //[createEvent(name:"switch", value:"on"), response(zwave.switchMultilevelV1.switchMultilevelGet().format())]
 }
 def zwaveEvent(physicalgraph.zwave.commands.switchmultilevelv1.SwitchMultilevelStopLevelChange cmd) {
 	log.debug "Multilevel Stop CHange: $cmd"
+}
+
+def zwaveEvent(physicalgraph.zwave.commands.switchcolorv3.SwitchColorSet cmd) {
+	//log.debug "color : $cmd.colorComponentCount"
+
+    if (cmd.colorComponentCount == 3){   		
+            sendEvent(name: "color", value: rgbToHex(r: cmd.colorComponentBytes[1],g: cmd.colorComponentBytes[3],b: cmd.colorComponentBytes[5]))
+            sendEvent(name: "Button", value: "pushed",  data: [buttonNumber: state.buttonnumber ], isStateChange: true)
+    		sendEvent(name: "Button Events", value: "#$state.buttonnumber pushed" )
+     }		
+}
+
+def zwaveEvent(physicalgraph.zwave.commands.switchcolorv3.SwitchColorStopLevelChange cmd) {
+	log.debug cmd
+}
+
+def zwaveEvent(physicalgraph.zwave.commands.switchcolorv3.SwitchColorStartLevelChange cmd) {
+	log.debug "start: $cmd"
 }
 /*
 def on() {
@@ -272,7 +318,7 @@ def zwaveEvent(physicalgraph.zwave.commands.basicv1.BasicReport cmd){
 
 def zwaveEvent(physicalgraph.zwave.commands.basicv1.BasicSet cmd){
 		log.debug "basic event Set: $cmd.value"
-		
+		//log.debug state.buttonnumber
         sendEvent(name: "Button", value: "hold",  data: [buttonNumber: state.buttonnumber ], isStateChange: true)
         sendEvent(name: "sceneNumber", value: "$state.buttonnumber" , isStateChange: true)
         
@@ -293,10 +339,7 @@ def zwaveEvent(physicalgraph.zwave.commands.associationv2.AssociationReport cmd)
 
 def zwaveEvent(physicalgraph.zwave.commands.sceneactivationv1.SceneActivationSet cmd) {
 	//log.debug( "Dimming Duration: $cmd.dimmingDuration")
-    //log.debug( "Button code: $cmd.sceneId")
-   
-    
-    
+    //log.debug( "Button code: $cmd.sceneId")   
 }
  
 def poll() {
@@ -311,7 +354,7 @@ def refresh() {
   def configure() {
     
  
-    def commands = [ ]
+    //def commands = [ ]
 			log.debug "Resetting Sensor Parameters to SmartThings Compatible Defaults"
 	def cmds = []
     cmds << zwave.associationV2.associationSet(groupingIdentifier: 1, nodeId: zwaveHubNodeId).format()
@@ -394,4 +437,20 @@ def ping() {
 	
     
     delayBetween(commands, 1250)
-*/    
+*/
+
+def rgbToHex(rgb) {
+    def r = hex(rgb.r)
+    def g = hex(rgb.g)
+    def b = hex(rgb.b)
+    def hexColor = "#${r}${g}${b}"
+    
+    hexColor
+}
+private hex(value, width=2) {
+	def s = new BigInteger(Math.round(value).toString()).toString(16)
+	while (s.size() < width) {
+		s = "0" + s
+	}
+	s
+}

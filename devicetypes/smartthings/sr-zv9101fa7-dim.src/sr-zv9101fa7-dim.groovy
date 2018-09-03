@@ -12,20 +12,39 @@
  *
  */
 metadata {
-	definition(name: "SR-ZV9101FA7-DIM", namespace: "SmartThings", author: "Yu Chang Mang", ocfDeviceType: "oic.d.light", minHubCoreVersion: '000.019.00012', executeCommandsLocally: true) {
+	definition(name: "SR-ZV9101FA7-DIM", namespace: "SmartThings", author: "Yu Chang Mang", ocfDeviceType: "oic.d.light",  minHubCoreVersion: '000.019.00012', executeCommandsLocally: true) {
 		capability "Switch Level"
 		capability "Actuator"
-		capability "Configuration"
+		capability "Health Check"
 		capability "Switch"
 		capability "Polling"
 		capability "Refresh"
 		capability "Sensor"
-		//capability "Light"
-        //capability "Health Check"
+		capability "Light"
 
-		fingerprint mfr:"0000", prod:"0000", model:"0000",deviceId: "0x1101", deviceJoinName: "SR-ZV9101FA7-DIM"
-        fingerprint inClusters: "0x5E, 0x86, 0x72, 0x5A, 0x73, 0x85, 0x59, 0x20, 0x5B, 0x2B, 0x2C, 0x26, 0x27, 0x7A"
-
+		fingerprint inClusters: "0x26", deviceJoinName: "Z-Wave Dimmer"
+		fingerprint mfr: "001D", prod: "1902", deviceJoinName: "Z-Wave Dimmer"
+		fingerprint mfr: "001D", prod: "3301", model: "0001", deviceJoinName: "Leviton Dimmer Switch"
+		fingerprint mfr: "001D", prod: "3201", model: "0001", deviceJoinName: "Leviton Dimmer Switch"
+		fingerprint mfr: "001D", prod: "1B03", model: "0334", deviceJoinName: "Leviton Universal Dimmer"
+		fingerprint mfr: "011A", prod: "0102", model: "0201", deviceJoinName: "Enerwave In-Wall Dimmer"
+		fingerprint mfr: "001D", prod: "1001", model: "0334", deviceJoinName: "Leviton 3-Speed Fan Controller"
+		fingerprint mfr: "001D", prod: "0602", model: "0334", deviceJoinName: "Leviton Magnetic Low Voltage Dimmer"
+		fingerprint mfr: "001D", prod: "0401", model: "0334", deviceJoinName: "Leviton 600W Incandescent Dimmer"
+		fingerprint mfr: "0111", prod: "8200", model: "0200", deviceJoinName: "Remotec Technology Plug-In Dimmer"
+		fingerprint mfr: "1104", prod: "001D", model: "0501", deviceJoinName: "Leviton 1000W Incandescant Dimmer"
+		fingerprint mfr: "0039", prod: "5044", model: "3033", deviceJoinName: "Honeywell Z-Wave Plug-in Dimmer (Dual Outlet)"
+		fingerprint mfr: "0039", prod: "5044", model: "3038", deviceJoinName: "Honeywell Z-Wave Plug-in Dimmer"
+		fingerprint mfr: "0039", prod: "4944", model: "3038", deviceJoinName: "Honeywell Z-Wave In-Wall Smart Dimmer"
+		fingerprint mfr: "0039", prod: "4944", model: "3130", deviceJoinName: "Honeywell Z-Wave In-Wall Smart Toggle Dimmer"
+		fingerprint mfr: "0063", prod: "4944", model: "3034", deviceJoinName: "GE In-Wall Smart Fan Control"
+		fingerprint mfr: "0063", prod: "4944", model: "3131", deviceJoinName: "GE In-Wall Smart Fan Control"
+		fingerprint mfr: "0039", prod: "4944", model: "3131", deviceJoinName: "Honeywell Z-Wave Plus In-Wall Fan Speed Control"
+		fingerprint mfr: "001A", prod: "4449", model: "0101", deviceJoinName: "Eaton RF Master Dimmer"
+		fingerprint mfr: "001A", prod: "4449", model: "0003", deviceJoinName: "Eaton RF Dimming Plug-In Module"
+		fingerprint mfr: "0086", prod: "0103", model: "0063", deviceJoinName: "Aeotec Smart Dimmer 6"
+		fingerprint mfr: "014F", prod: "5744", model: "3530", deviceJoinName: "GoControl In-Wall Dimmer"        
+        fingerprint mfr: "0000", prod: "0003", model: "0002", deviceJoinName: "SunRicher SR-ZV9101FA7-DIM"
 	}
 
 	simulator {
@@ -49,10 +68,10 @@ metadata {
 	tiles(scale: 2) {
 		multiAttributeTile(name: "switch", type: "lighting", width: 6, height: 4, canChangeIcon: true) {
 			tileAttribute("device.switch", key: "PRIMARY_CONTROL") {
-				attributeState "on", label: '${name}', action: "switch.off", icon: "st.switches.light.on", backgroundColor: "#00a0dc", nextState: "turningOff"
-				attributeState "off", label: '${name}', action: "switch.on", icon: "st.switches.light.off", backgroundColor: "#ffffff", nextState: "turningOn"
-				attributeState "turningOn", label: '${name}', action: "switch.off", icon: "st.switches.light.on", backgroundColor: "#00a0dc", nextState: "turningOff"
-				attributeState "turningOff", label: '${name}', action: "switch.on", icon: "st.switches.light.off", backgroundColor: "#ffffff", nextState: "turningOn"
+				attributeState "on", label: '${name}', action: "switch.off", icon: "st.switches.switch.on", backgroundColor: "#00a0dc", nextState: "turningOff"
+				attributeState "off", label: '${name}', action: "switch.on", icon: "st.switches.switch.off", backgroundColor: "#ffffff", nextState: "turningOn"
+				attributeState "turningOn", label: '${name}', action: "switch.off", icon: "st.switches.switch.on", backgroundColor: "#00a0dc", nextState: "turningOff"
+				attributeState "turningOff", label: '${name}', action: "switch.on", icon: "st.switches.switch.off", backgroundColor: "#ffffff", nextState: "turningOn"
 			}
 			tileAttribute("device.level", key: "SLIDER_CONTROL") {
 				attributeState "level", action: "switch level.setLevel"
@@ -62,31 +81,37 @@ metadata {
 		standardTile("refresh", "device.switch", width: 2, height: 2, inactiveLabel: false, decoration: "flat") {
 			state "default", label: '', action: "refresh.refresh", icon: "st.secondary.refresh"
 		}
-/*
+
 		valueTile("level", "device.level", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
 			state "level", label: '${currentValue} %', unit: "%", backgroundColor: "#ffffff"
 		}
-*/
+
 		main(["switch"])
-		details(["switch", "refresh"])
+		details(["switch", "level", "refresh"])
 
 	}
-    
-        preferences {
-        input("dimRate", "enum", title: "漸暗的速率", options: [[0:"快"], [1:"一般"], [5:"慢"], [10:"很慢"]], defaultValue: 1,  required: false, displayDuringSetup: true)
-        input("dimOnOff", "enum", title: "開/關命令的轉換漸暗？", options: ["Yes", "No"], defaultValue: "No", required: false, displayDuringSetup: true)
-    }
-    
 }
 
 def installed() {
 // Device-Watch simply pings if no device events received for 32min(checkInterval)
 	sendEvent(name: "checkInterval", value: 2 * 15 * 60 + 2 * 60, displayed: false, data: [protocol: "zwave", hubHardwareId: device.hub.hardwareID, offlinePingable: "1"])
 	def commands = refresh()
-	if (zwaveInfo.mfr.equals("001A")) {
+	if (zwaveInfo?.mfr?.equals("001A")) {
 		commands << "delay 100"
 		//for Eaton dimmers parameter 7 is ramp time. We set it to 1s for devices to work correctly with local execution
 		commands << zwave.configurationV1.configurationSet(configurationValue: [1], parameterNumber: 7, size: 1).format()
+	} else if (isHoneywellDimmer()) {
+		//Set ramp time to 1s for this device to turn off dimmer correctly when current level is over 66.
+		commands << "delay 100"
+		//Parameter 7 - z-wave ramp up/down step size, Parameter 8 - z-wave step interval equals configurationValue times 10 ms
+		commands << zwave.configurationV1.configurationSet(configurationValue: [1], parameterNumber: 7, size: 1).format()
+		commands << "delay 200"
+		commands << zwave.configurationV1.configurationSet(configurationValue: [0, 1], parameterNumber: 8, size: 2).format()
+		commands << "delay 200"
+		//Parameter 7 - manual operation ramp up/down step size, Parameter 8 - z-wave manual operation interval equals configurationValue times 10 ms
+		commands << zwave.configurationV1.configurationSet(configurationValue: [1], parameterNumber: 9, size: 1).format()
+		commands << "delay 200"
+		commands << zwave.configurationV1.configurationSet(configurationValue: [0, 1], parameterNumber: 10, size: 2).format()
 	}
 	response(commands)
 }
@@ -94,17 +119,6 @@ def installed() {
 def updated() {
 // Device-Watch simply pings if no device events received for 32min(checkInterval)
 	sendEvent(name: "checkInterval", value: 2 * 15 * 60 + 2 * 60, displayed: false, data: [protocol: "zwave", hubHardwareId: device.hub.hardwareID, offlinePingable: "1"])
-  
-    	state.dOnOff = 0
-
-    if (dimOnOff == "Yes" & dimRate != null){
-		state.dOnOff = Integer.parseInt(dimRate)
-    }
-    else{
-    	state.dOnOff = 0
-    }
-
-
 }
 
 def getCommandClassVersions() {
@@ -116,7 +130,6 @@ def getCommandClassVersions() {
 }
 
 def parse(String description) {
-	
 	def result = null
 	if (description != "updated") {
 		log.debug "parse() >> zwave.parse($description)"
@@ -138,13 +151,12 @@ def zwaveEvent(physicalgraph.zwave.commands.basicv1.BasicReport cmd) {
 	dimmerEvents(cmd)
 }
 
-
 def zwaveEvent(physicalgraph.zwave.commands.basicv1.BasicSet cmd) {
 	dimmerEvents(cmd)
 }
 
-def zwaveEvent(physicalgraph.zwave.commands.switchmultilevelv1.SwitchMultilevelReport cmd) {	
-    dimmerEvents(cmd)
+def zwaveEvent(physicalgraph.zwave.commands.switchmultilevelv1.SwitchMultilevelReport cmd) {
+	dimmerEvents(cmd)
 }
 
 def zwaveEvent(physicalgraph.zwave.commands.switchmultilevelv1.SwitchMultilevelSet cmd) {
@@ -155,7 +167,7 @@ private dimmerEvents(physicalgraph.zwave.Command cmd) {
 	def value = (cmd.value ? "on" : "off")
 	def result = [createEvent(name: "switch", value: value)]
 	if (cmd.value && cmd.value <= 100) {
-		result << createEvent(name: "level", value: cmd.value, unit: "%")
+		result << createEvent(name: "level", value: cmd.value == 99 ? 100 : cmd.value)
 	}
 	return result
 }
@@ -210,8 +222,6 @@ def off() {
 
 def setLevel(value) {
 	log.debug "setLevel >> value: $value"
-    setLevel(value, 1)
-    /*
 	def valueaux = value as Integer
 	def level = Math.max(Math.min(valueaux, 99), 0)
 	if (level > 0) {
@@ -219,12 +229,7 @@ def setLevel(value) {
 	} else {
 		sendEvent(name: "switch", value: "off")
 	}
-	sendEvent(name: "level", value: level, unit: "%")
-	delayBetween([
-    	zwave.basicV1.basicSet(value: level).format(), 
-        zwave.switchMultilevelV1.switchMultilevelGet().format()
-    ], 5000)
-    */
+	delayBetween([zwave.basicV1.basicSet(value: level).format(), zwave.switchMultilevelV1.switchMultilevelGet().format()], 5000)
 }
 
 def setLevel(value, duration) {
@@ -233,9 +238,8 @@ def setLevel(value, duration) {
 	def level = Math.max(Math.min(valueaux, 99), 0)
 	def dimmingDuration = duration < 128 ? duration : 128 + Math.round(duration / 60)
 	def getStatusDelay = duration < 128 ? (duration * 1000) + 2000 : (Math.round(duration / 60) * 60 * 1000) + 2000
-	// dimmingDuration: DIM 的速度
-	delayBetween([zwave.switchMultilevelV2.switchMultilevelSet(value: level, dimmingDuration: state.dOnOff).format(),
-				  zwave.switchMultilevelV1.switchMultilevelGet().format()], 5000)
+	delayBetween([zwave.switchMultilevelV2.switchMultilevelSet(value: level, dimmingDuration: dimmingDuration).format(),
+				  zwave.switchMultilevelV1.switchMultilevelGet().format()], getStatusDelay)
 }
 
 def poll() {
@@ -253,9 +257,17 @@ def refresh() {
 	log.debug "refresh() is called"
 	def commands = []
 	commands << zwave.switchMultilevelV1.switchMultilevelGet().format()
-    
 	if (getDataValue("MSR") == null) {
 		commands << zwave.manufacturerSpecificV1.manufacturerSpecificGet().format()
 	}
 	delayBetween(commands, 100)
+}
+
+def isHoneywellDimmer() {
+	zwaveInfo?.mfr?.equals("0039") && (
+		(zwaveInfo?.prod?.equals("5044") && zwaveInfo?.model?.equals("3033")) ||
+			(zwaveInfo?.prod?.equals("5044") && zwaveInfo?.model?.equals("3038")) ||
+			(zwaveInfo?.prod?.equals("4944") && zwaveInfo?.model?.equals("3038")) ||
+			(zwaveInfo?.prod?.equals("4944") && zwaveInfo?.model?.equals("3130"))
+	)
 }

@@ -73,19 +73,45 @@ metadata {
 def updated() {
 	response(refresh())
 }
-
+def getCommandClassVersions() {
+	[
+		0x20: 1,	// Basic
+		0x26: 1,	// SwitchMultilevel        
+        0x33: 1, 	//SWITCH_COLOR
+        0x5E: 1,	//ZWAVEPLUS_INFO 
+        0x86: 1,	//VERSION 
+        0x72: 1, 	//MANUFACTURER_SPECIFIC
+        0x5A: 1,	//DEVICE_RESET_LOCALLY  
+        0x73: 1, 	//NOTIFICATION 
+        0x85: 1, 	//ASSOCIATION 
+        0x59: 1, 	//ASSOCIATION_GRP_INFO
+        0x5B: 1, 	//CENTRAL_SCENE
+        0x2B: 1, 	//REMOTE_ASSOCIATION
+        0x2C: 1,	//SCENE_ACTIVATION
+        0x27: 1, 	//SWITCH_ALL 
+        0x7A: 1,	//FIRMWARE_UPDATE_MD 
+	]
+}
 def parse(description) {
 	def result = null
 	if (description != "updated") {
-		def cmd = zwave.parse(description, [0x20: 1, 0x26: 3, 0x70: 1, 0x33:3])
+    	log.debug "parse() >> zwave.parse($description)"
+		def cmd = zwave.parse(description, commandClassVersions)
+        
 		if (cmd) {
 			result = zwaveEvent(cmd)
-			log.debug("'$description' parsed to $result")
+			//log.debug("'$description' parsed to $result")
 		} else {
 			log.debug("Couldn't zwave.parse '$description'")
 		}
 	}
-	result
+    	if (result?.name == 'hail' && hubFirmwareLessThan("000.011.00602")) {
+		result = [result, response(zwave.basicV1.basicGet())]
+		log.debug "Was hailed: requesting state update"
+	} else {
+		log.debug "Parse returned ${result?.descriptionText}"
+	}
+	return result
 }
 
 def zwaveEvent(physicalgraph.zwave.commands.basicv1.BasicReport cmd) {
@@ -93,14 +119,16 @@ def zwaveEvent(physicalgraph.zwave.commands.basicv1.BasicReport cmd) {
 }
 
 def zwaveEvent(physicalgraph.zwave.commands.basicv1.BasicSet cmd) {
+	log.debug "basicSet : $cmd"
 	dimmerEvents(cmd)
 }
 
-def zwaveEvent(physicalgraph.zwave.commands.switchmultilevelv3.SwitchMultilevelReport cmd) {
+def zwaveEvent(physicalgraph.zwave.commands.switchmultilevelv1.SwitchMultilevelReport cmd) {
 	dimmerEvents(cmd)
 }
 
 private dimmerEvents(physicalgraph.zwave.Command cmd) {
+	log.debug "dimmerEvent : $cmd"
 	def value = (cmd.value ? "on" : "off")
 	def result = [createEvent(name: "switch", value: value, descriptionText: "$device.displayName was turned $value")]
 	if (cmd.value) {
@@ -110,9 +138,9 @@ private dimmerEvents(physicalgraph.zwave.Command cmd) {
 }
 
 def zwaveEvent(physicalgraph.zwave.commands.hailv1.Hail cmd) {
-	response(command(zwave.switchMultilevelV1.switchMultilevelGet()))
+	//response(command(zwave.switchMultilevelV1.switchMultilevelGet()))
 }
-
+/*
 def zwaveEvent(physicalgraph.zwave.commands.securityv1.SecurityMessageEncapsulation cmd) {
 	def encapsulatedCommand = cmd.encapsulatedCommand([0x20: 1, 0x84: 1])
 	if (encapsulatedCommand) {
@@ -128,43 +156,67 @@ def zwaveEvent(physicalgraph.zwave.commands.securityv1.SecurityMessageEncapsulat
 		result
 	}
 }
-
+*/
 
 def zwaveEvent(physicalgraph.zwave.Command cmd) {
+/*
 	def linkText = device.label ?: device.name
 	[linkText: linkText, descriptionText: "$linkText: $cmd", displayed: false]
+    */
+    [:]
 }
 
 def on() {
-	commands([
-		zwave.basicV1.basicSet(value: 0xFF),
-		zwave.switchMultilevelV3.switchMultilevelGet(),
-	], 3500)
+	delayBetween([
+		zwave.basicV1.basicSet(value: 0xFF).format(),
+		zwave.switchMultilevelV1.switchMultilevelGet().format()
+	], 5000)
 }
 
 def off() {
-	commands([
-		zwave.basicV1.basicSet(value: 0x00),
-		zwave.switchMultilevelV3.switchMultilevelGet(),
-	], 3500)
+	delayBetween([
+		zwave.basicV1.basicSet(value: 0x00).format(),
+		zwave.switchMultilevelV1.switchMultilevelGet().format()
+	], 5000)
 }
+
 
 def setLevel(level) {
 	setLevel(level, 1)
 }
 
-def setLevel(level, duration) {
-	if(level > 99) level = 99
-	commands([
-		zwave.switchMultilevelV3.switchMultilevelSet(value: level, dimmingDuration: duration),
-		zwave.switchMultilevelV3.switchMultilevelGet(),
-	], (duration && duration < 12) ? (duration * 1000) : 3500)
+def setLevel(value, duration) {
+	//log.debug "setLevel >> value: $value, duration: $duration"
+	def valueaux = value as Integer
+	def level = Math.max(Math.min(valueaux, 99), 0)
+	def dimmingDuration = duration < 128 ? duration : 128 + Math.round(duration / 60)
+	def getStatusDelay = duration < 128 ? (duration * 1000) + 2000 : (Math.round(duration / 60) * 60 * 1000) + 2000
+	// dimmingDuration: DIM 的速度
+    //log.debug "setLevel >> value: $level, duration: $duration"
+	delayBetween([zwave.switchMultilevelV2.switchMultilevelSet(value: level, dimmingDuration: duration).format(),
+				  zwave.switchMultilevelV1.switchMultilevelGet().format()], 5000)
 }
 
+def poll() {
+	refresh()
+}
+def ping() {
+	refresh()
+}
 def refresh() {
+/*
 	commands([
-		zwave.switchMultilevelV3.switchMultilevelGet(),
+		zwave.switchMultilevelV1.switchMultilevelGet(),
 	], 1000)
+    */
+    	log.debug "refresh() is called"
+	def commands = []
+	commands << zwave.switchMultilevelV1.switchMultilevelGet().format()
+    
+	if (getDataValue("MSR") == null) {
+		commands << zwave.manufacturerSpecificV1.manufacturerSpecificGet().format()
+	}
+	delayBetween(commands, 100)
 }
 
 def setSaturation(percent) {
@@ -180,30 +232,49 @@ def setHue(value) {
 def setColor(value) {
 	def result = []
 	log.debug "setColor: ${value}"
+    def max = 0xfe
 	if (value.hex) {
 		def c = value.hex.findAll(/[0-9a-fA-F]{2}/).collect { Integer.parseInt(it, 16) }
-		result << zwave.switchColorV3.switchColorSet(red:c[0], green:c[1], blue:c[2], warmWhite:0, coldWhite:0)
+		result << zwave.switchColorV1.switchColorSet(red:c[0], green:c[1], blue:c[2], warmWhite:0, coldWhite:0).format()
+        sendEvent(name: "color", value: value.hex)
 	} else {
 		def hue = value.hue ?: device.currentValue("hue")
 		def saturation = value.saturation ?: device.currentValue("saturation")
 		if(hue == null) hue = 13
 		if(saturation == null) saturation = 13
-		def rgb = huesatToRGB(hue, saturation)
-		result << zwave.switchColorV3.switchColorSet(red: rgb[0], green: rgb[1], blue: rgb[2], warmWhite:0, coldWhite:0)
+        def rgb = huesatToRGB(hue, saturation)          
+        sendEvent(name: "color", value: rgbToHex(r: rgb[0], g: rgb[1], b: rgb[2])) 
+       
+		result << zwave.switchColorV1.switchColorSet(red: rgb[0], green: rgb[1], blue: rgb[2], warmWhite:0, coldWhite:0).format()
 	}
-
+	
+    
 	if(value.hue) sendEvent(name: "hue", value: value.hue)
-	if(value.hex) sendEvent(name: "color", value: value.hex)
-	if(value.switch) sendEvent(name: "switch", value: value.switch)
-	if(value.saturation) sendEvent(name: "saturation", value: value.saturation)
+    if(value.saturation) sendEvent(name: "saturation", value: value.saturation)
+	//if(value.hex) sendEvent(name: "color", value: value.hex)
+	//if(value.switch) sendEvent(name: "switch", value: value.switch)	
+	if(value.level) sendEvent(name: "level", value: value.level, unit: "%") 
+  		
+        
+    //result << zwave.switchMultilevelV2.switchMultilevelSet(value: device.currentValue("level"), dimmingDuration: 1).format()
+	//result << zwave.switchMultilevelV1.switchMultilevelGet().format()
+		
+	delayBetween(result)
 
-	commands(result)
 }
-
+/*
+private evenHex(value){
+    def s = new BigInteger(Math.round(value).toString()).toString(16)
+    while (s.size() % 2 != 0) {
+        s = "0" + s
+    }
+    s
+}
+*/
 def setColorTemperature(percent) {
 	if(percent > 99) percent = 99
 	int warmValue = percent * 255 / 99
-	command(zwave.switchColorV3.switchColorSet(red:0, green:0, blue:0, warmWhite:warmValue, coldWhite:(255 - warmValue)))
+	command(zwave.switchColorV1.switchColorSet(red:0, green:0, blue:0, warmWhite:warmValue, coldWhite:(255 - warmValue)))
 }
 
 def reset() {
@@ -260,4 +331,21 @@ def huesatToRGB(float hue, float sat) {
 		case 4: return [t, p, 255]
 		case 5: return [255, p, q]
 	}
+    
+}
+
+def rgbToHex(rgb) {
+    def r = hex(rgb.r)
+    def g = hex(rgb.g)
+    def b = hex(rgb.b)
+    def hexColor = "#${r}${g}${b}"
+    
+    hexColor
+}
+private hex(value, width=2) {
+	def s = new BigInteger(Math.round(value).toString()).toString(16)
+	while (s.size() < width) {
+		s = "0" + s
+	}
+	s
 }

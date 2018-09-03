@@ -21,7 +21,7 @@
 
 metadata {
 	// Automatically generated. Make future change here.
-	definition (name: "SR-ZG9103FA7-RGBW", namespace: "smartthings", author: "SmartThings") {
+	definition (name: "SR-ZG9103FA7-RGBW", namespace: "SmartThings", author: "Yu Chang Mang") {
 		capability "Switch Level"
 		capability "Actuator"
 		capability "Color Control"
